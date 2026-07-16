@@ -1,0 +1,7 @@
+patient: M.K
+age: 70
+sex: male
+reporter: pharmacist
+subject: report on Neurolyn
+description: Patients reporting mild nausea which got resolved without treatment.
+The patient did not seek any medical attention
