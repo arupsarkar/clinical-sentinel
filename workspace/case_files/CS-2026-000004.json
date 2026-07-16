@@ -1,0 +1,15 @@
+{
+  "case_id": "CS-2026-000004",
+  "received_date": "2026-07-16",
+  "patient": {
+    "age_years": 62,
+    "sex": "male",
+    "initials": null
+  },
+  "reporter_type": "physician (oncologist)",
+  "suspect_drug": "Drugamab",
+  "event_description": "severe difficulty breathing about two hours after last infusion, required overnight hospital admission for observation; patient discharged the following morning and described as stable",
+  "seriousness": [],
+  "narrative": null,
+  "_source_file": "report_001.txt"
+}

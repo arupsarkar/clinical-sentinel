@@ -8,7 +8,7 @@ for validation, defaults, and (later) per-environment overrides.
 
 import os
 from dataclasses import dataclass
-
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load .env into process environment variables at import time.
@@ -33,6 +33,22 @@ class Settings:
     # Working directory for agent filesystem context (CLAUDE.md, .claude/).
     # Relative to the project root; resolved properly in later chunks.
     agent_workspace: str = "workspace"
+
+    @property
+    def workspace_dir(self) -> Path:
+        return Path(self.agent_workspace)
+
+    @property
+    def audit_dir(self) -> Path:
+        return self.workspace_dir / "audit"
+
+    @property
+    def case_files_dir(self) -> Path:
+        return self.workspace_dir / "case_files"
+
+    @property
+    def intake_queue_dir(self) -> Path:
+        return self.workspace_dir / "intake_queue"    
 
 
 def get_settings() -> Settings:

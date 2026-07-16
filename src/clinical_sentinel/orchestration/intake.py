@@ -7,11 +7,11 @@ Pydantic validation — Principle 1 and Principle 8.
 """
 
 import json
-
-from claude_agent_sdk import ClaudeAgentOptions, query
-
+from pathlib import Path
 from clinical_sentinel.config import get_settings
 from clinical_sentinel.models.intake import IntakeExtraction
+from claude_agent_sdk import ClaudeAgentOptions, HookMatcher, query
+from clinical_sentinel.persistence.audit import AuditLog
 
 
 def _build_prompt(report_filename: str) -> str:
@@ -39,6 +39,29 @@ def _extract_json(raw: str) -> str:
     return text
 
 
+def _make_tool_audit_hook(audit: AuditLog):
+    """Build a PostToolUse hook that records every agent tool call.
+
+    Deterministic by construction: the SDK invokes this on EVERY matching
+    tool use — the agent cannot skip, forget, or be prompted out of it.
+    Closure over `audit` = dependency injection for hooks.
+    """
+
+    async def log_tool_use(input_data, tool_use_id, context):
+        audit.record(
+            event_type="agent_tool_use",
+            actor="agent:intake-specialist",
+            detail={
+                "tool": input_data.get("tool_name", "unknown"),
+                # Log WHICH file was touched — but never file CONTENTS:
+                # audit logs must not become a second copy of patient data.
+                "file_path": input_data.get("tool_input", {}).get("file_path"),
+            },
+        )
+        return {}  # empty dict = observe only, don't block or modify
+
+    return log_tool_use
+
 async def run_intake(report_filename: str) -> IntakeExtraction:
     """Process one intake document; return a VALIDATED extraction.
 
@@ -46,6 +69,7 @@ async def run_intake(report_filename: str) -> IntakeExtraction:
     conform — bad output dies here, at the boundary, never downstream.
     """
     settings = get_settings()
+    audit = AuditLog(settings.audit_dir)
 
     options = ClaudeAgentOptions(
         model=settings.model,
@@ -56,6 +80,11 @@ async def run_intake(report_filename: str) -> IntakeExtraction:
                                             # isolation mode (cookbook lesson)
         allowed_tools=["Read", "Glob", "Agent"],  # Agent = the subagent
                                                   # invocation tool itself
+        hooks={
+            "PostToolUse": [
+                HookMatcher(matcher="Read|Glob", hooks=[_make_tool_audit_hook(audit)])
+            ]
+        },                                                  
     )
 
     result_text: str | None = None
@@ -70,3 +99,6 @@ async def run_intake(report_filename: str) -> IntakeExtraction:
 
     # THE boundary: free text becomes typed, validated domain data — or dies.
     return IntakeExtraction.model_validate_json(_extract_json(result_text))
+
+
+    

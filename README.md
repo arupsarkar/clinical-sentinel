@@ -26,6 +26,25 @@ every consequential decision:
 - **Regulatory Reporter** — drafts expedited reports in plan mode,
   requiring human approval before anything is submitted
 
+## Scope & progress
+
+**v0.1 goal:** an end-to-end demonstration — raw report → validated
+intake → persisted case → audited trail → severity assessment →
+human-gated regulatory draft. A demo of architecture, not a product.
+
+| # | Workstream | Status |
+|---|-----------|--------|
+| 1 | Foundation (config, domain models, tests, docs) | ✅ Done |
+| 2 | Intake agent (extraction with honesty guarantees) | ✅ Done |
+| 3 | Case persistence (system-minted IDs, provenance) | 🔨 In progress |
+| 4 | Audit trail via deterministic hooks | ⬜ Planned |
+| 5 | Severity assessor agent | ⬜ Planned |
+| 6 | Regulatory reporter (plan mode, human-gated) | ⬜ Planned |
+| 7 | CLI polish + architecture docs | ⬜ Planned |
+
+**Overall: ~71%** · Deliberately out of scope: see
+[ADR 0005](docs/adr/0005-scope-freeze-v0-1.md).  
+
 ## Why it's built this way
 
 Safety controls here are **architecture, not prompts**:
