@@ -7,7 +7,9 @@ authors = [
     { name = "arupsarkar", email = "sarkar.arup@gmail.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "claude-agent-sdk>=0.2.120",
+]
 
 [project.scripts]
 clinical-sentinel = "clinical_sentinel:main"

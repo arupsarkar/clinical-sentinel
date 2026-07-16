@@ -8,3 +8,12 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Secrets — never commit API keys
+.env
+.env.*
+
+# Editor/OS noise
+.vscode/
+.idea/
+.DS_Store
