@@ -1,0 +1,17 @@
+[project]
+name = "clinical-sentinel"
+version = "0.1.0"
+description = "Multi-agent pharmacovigilance triage system built on the Claude Agent SDK"
+readme = "README.md"
+authors = [
+    { name = "arupsarkar", email = "sarkar.arup@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+clinical-sentinel = "clinical_sentinel:main"
+
+[build-system]
+requires = ["uv_build>=0.8.13,<0.9.0"]
+build-backend = "uv_build"
