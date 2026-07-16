@@ -2,6 +2,7 @@
 
 Multi-agent pharmacovigilance (PV) triage system built on the
 [Claude Agent SDK](https://code.claude.com/docs/en/agent-sdk/overview).
+- [Design principles](docs/architecture/design-principles.md) — the rules every component follows
 
 > **Status:** 🚧 Active development — this README is a living document.
 

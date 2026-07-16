@@ -1,0 +1,11 @@
+CALL CENTER TRANSCRIPT — Meridian Therapeutics Medical Information Line
+Date of call: 2026-07-14
+Agent: Thank you for calling Meridian, how can I help?
+Caller: Hi, I'm Dr. Patel, an oncologist at Riverside Medical. I need to
+report a reaction in one of my patients. 62-year-old male, been on
+Drugamab for about six weeks. He developed severe difficulty breathing
+about two hours after his last infusion and we had to admit him
+overnight for observation. He's stable now.
+Agent: I'm sorry to hear that. Can you confirm the patient is recovering?
+Caller: Yes, discharged this morning. But I wanted this on record given
+how sudden it was.
