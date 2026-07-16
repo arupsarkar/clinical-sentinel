@@ -9,8 +9,7 @@ be constructed, only rejected with a precise error.
 
 from datetime import date
 from enum import StrEnum
-
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class Seriousness(StrEnum):
@@ -69,3 +68,20 @@ class AdverseEventCase(BaseModel):
     def is_serious(self) -> bool:
         """Serious cases trigger expedited regulatory deadlines."""
         return len(self.seriousness) > 0
+
+    @model_validator(mode="after")
+    def patient_must_be_identifiable(self) -> "AdverseEventCase":
+        """Regulatory minimum element #1: an *identifiable* patient.
+
+        Field-level constraints check fields in isolation; this rule is
+        about the patient as a whole, so it runs mode='after' — once all
+        fields are parsed and typed — and either blesses the object or
+        raises, so an unidentifiable-patient case can never exist.
+        """
+        if not self.patient.is_identifiable():
+            raise ValueError(
+                "Case rejected: patient is not identifiable. "
+                "At least one of age, sex, or initials is required "
+                "(PV minimum criteria)."
+            )
+        return self
