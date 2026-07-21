@@ -15,7 +15,8 @@ USAGE = """usage:
   clinical-sentinel <report_filename>     intake one report from the queue
   clinical-sentinel assess <case_id>      assess seriousness of one case
   clinical-sentinel draft <case_id>       draft regulatory report (pending review)
-  clinical-sentinel approve <case_id>     approve a pending draft (human gate)"""
+  clinical-sentinel approve <case_id>     approve a pending draft (human gate)
+  clinical-sentinel eval <report_filename> run the N=5 consistency eval for one report against its golden label"""
 
 
 def _intake_command(report_filename: str) -> None:
@@ -100,6 +101,23 @@ def _approve_command(case_id: str) -> None:
     )
     print(f"approved:  {case_id} — recorded with actor 'human:cli'")
 
+def _eval_command(report_filename: str) -> None:
+    """Run the N=5 consistency eval for one report against its golden label."""
+    import json as _json
+    from pathlib import Path
+    from clinical_sentinel.evals.models import GoldenCase
+    from clinical_sentinel.evals.consistency import run_consistency
+
+    golden_path = Path("eval/golden") / report_filename.replace(".txt", ".json")
+    golden = GoldenCase.model_validate_json(golden_path.read_text())
+    report = asyncio.run(run_consistency(golden, report_filename, n=5))
+
+    print(f"source: {report.source}   trials: {report.trials}")
+    print(f"{'field':<22} {'pass':>5} {'agree':>6} {'#vals':>6}  modal")
+    for f in report.fields:
+        print(f"{f.field:<22} {f.pass_rate:>5.0%} {f.agreement_rate:>6.0%} {f.distinct_values:>6}  {f.modal_value}")
+    print(f"all trials passed: {report.all_trials_passed}")
+
 def main() -> None:
     """CLI entry point: parse argv and dispatch to exactly one command.
 
@@ -123,6 +141,10 @@ def main() -> None:
 
     if len(args) == 1:
         _intake_command(args[0])
+        return
+
+    if len(args) == 2 and args[0] == "eval":
+        _eval_command(args[1])
         return
 
     print(USAGE, file=sys.stderr)
