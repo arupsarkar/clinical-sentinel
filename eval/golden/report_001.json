@@ -1,0 +1,15 @@
+{
+    "source": "report_001.txt",
+    "expected": {
+      "suspect_drug": "Drugamab",
+      "patient": {"age_years": 62, "sex": "male", "initials": null},
+      "reporter_category": "physician",
+      "is_complete": true,
+      "seriousness_facts": {
+        "death": false, "life_threatening": false, "hospitalization": true,
+        "disability": false, "congenital_anomaly": false, "other_medically_important": false
+      }
+    },
+    "must_not_invent": ["patient.initials"],
+    "notes": "Overnight admission = hospitalization. Reporter 'physician (oncologist)' should normalize to category 'physician'."
+  }

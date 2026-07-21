@@ -1,0 +1,19 @@
+{
+  "facts": {
+    "death": false,
+    "life_threatening": false,
+    "hospitalization": true,
+    "disability": false,
+    "congenital_anomaly": false,
+    "medically_important": false
+  },
+  "supporting_evidence": {
+    "hospitalization": "patient admitted overnight for observation; discharged the following morning"
+  },
+  "classification": {
+    "is_serious": true,
+    "criteria_met": [
+      "hospitalization"
+    ]
+  }
+}

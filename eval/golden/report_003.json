@@ -1,0 +1,15 @@
+{
+    "source": "report_003.txt",
+    "expected": {
+      "suspect_drug": "Neurolyn",
+      "patient": {"age_years": 70, "sex": "male", "initials": "M.K"},
+      "reporter_category": "pharmacist",
+      "is_complete": true,
+      "seriousness_facts": {
+        "death": false, "life_threatening": false, "hospitalization": false,
+        "disability": false, "congenital_anomaly": false, "other_medically_important": false
+      }
+    },
+    "must_not_invent": [],
+    "notes": "RULINGS: (1) initials expected as 'M.K' verbatim from the form; scorer should compare initials case-insensitively and ignoring trailing periods ('M.K.' == 'M.K' == 'mk' is too loose — accept 'M.K' and 'M.K.' only). (2) All seriousness facts false: 'mild nausea', self-resolved, no medical attention — explicitly non-serious control case. (3) This is the clean control: every field explicit in source; any deviation is pure extraction error, not ambiguity."
+  }

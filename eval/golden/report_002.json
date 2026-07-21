@@ -1,0 +1,15 @@
+{
+    "source": "report_002.txt",
+    "expected": {
+      "suspect_drug": "Cardiofex",
+      "patient": {"age_years": null, "sex": "female", "initials": null},
+      "reporter_category": "consumer",
+      "is_complete": true,
+      "seriousness_facts": {
+        "death": false, "life_threatening": false, "hospitalization": false,
+        "disability": false, "congenital_anomaly": false, "other_medically_important": false
+      }
+    },
+    "must_not_invent": ["patient.age_years", "patient.initials"],
+    "notes": "RULINGS: (1) sex=female accepted as correct — 'my mother' states sex by direct implication; this single qualifier makes the patient identifiable, hence is_complete=true. (2) suspect_drug normalized to catalog name 'Cardiofex' despite source spellings 'Cardioflex'/'cardiofex'; verbatim spellings are evidence, not the expected value. (3) reporter_category canonical value 'consumer' — daughter of patient is a non-HCP reporter; scorer should treat 'consumer/family member' variants as this category. (4) All seriousness facts false: reporter's word 'serious' is lay vocabulary, not an ICH E2A criterion; dizziness/nausea/hyperventilation self-resolved within 2 hours, no medical attention sought, no criterion met. (5) must_not_invent: any non-null age_years or initials is a scored hallucination failure."
+  }
