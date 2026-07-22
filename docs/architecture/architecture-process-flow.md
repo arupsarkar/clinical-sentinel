@@ -161,9 +161,9 @@ sequenceDiagram
     O->>SA: query(...) tools=[Read,Bash,Agent]
     SA->>SA: Read case + establish 6 boolean FACTS from text
     SA->>SS: Bash: python3 scripts/seriousness_scorer.py --death false ... --hospitalization true ...
-    Note over SS: All 6 flags REQUIRED — agent must take<br/>explicit position; script owns the RULES
+    Note over SS: All 6 flags REQUIRED — agent must take<br/>explicit position, script owns the RULES
     SS-->>SA: {"is_serious": true, "criteria_met": ["hospitalization"]}
-    Note over SA: Instructed: report script verdict verbatim,<br/>NEVER override; on script error, report error
+    Note over SA: Instructed to report script verdict verbatim,<br/>NEVER override — on script error, report error
     SA-->>O: JSON {facts, supporting_evidence, classification}
     O->>B: SeverityAssessment.model_validate_json
     B-->>M: validated SeverityAssessment
@@ -193,7 +193,7 @@ sequenceDiagram
     D->>D: fail fast: assessment file must exist
     D->>RA: query(...) tools=[Read,Agent] — read-only by design
     RA-->>D: JSON {narrative} — language work ONLY
-    D->>D: SYSTEM computes: is_expedited = script verdict;<br/>deadline = received_date + 15 days
+    D->>D: SYSTEM computes is_expedited = script verdict,<br/>deadline = received_date + 15 days
     D->>D: write pending_review/CS-*-draft.json (status: pending_review)
     D->>AL: record report_drafted (actor: system:reporting)
     D-->>U: PENDING HUMAN REVIEW — use 'approve' after reading
