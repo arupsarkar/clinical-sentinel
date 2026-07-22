@@ -9,6 +9,7 @@ in the agent prompt. The golden files' notes are the spec; this module
 is the implementation of those rulings.
 """
 
+from clinical_sentinel._trace import trace
 from clinical_sentinel.evals.models import CaseEvalResult, FieldResult, GoldenCase
 from clinical_sentinel.models.intake import IntakeExtraction
 
@@ -52,6 +53,7 @@ def _check(field: str, expected, actual, *, must_not_invent: bool = False) -> Fi
 
 
 def score_extraction(golden: GoldenCase, extraction: IntakeExtraction) -> CaseEvalResult:
+    trace("EVAL", "score_extraction", f"scoring against golden for {golden.source}")
     exp = golden.expected
     mni = set(golden.must_not_invent)
 
@@ -69,4 +71,11 @@ def score_extraction(golden: GoldenCase, extraction: IntakeExtraction) -> CaseEv
                _normalize_reporter(extraction.reporter_type)),
         _check("is_complete", exp.is_complete, extraction.is_complete()),
     ]
+    passed = sum(1 for f in fields if f.passed)
+    hallucinations = sum(1 for f in fields if f.is_hallucination)
+    trace(
+        "EVAL",
+        "score_extraction",
+        f"result — {passed}/{len(fields)} fields passed, hallucinations={hallucinations}",
+    )
     return CaseEvalResult(source=golden.source, fields=fields)

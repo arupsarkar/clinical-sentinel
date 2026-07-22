@@ -11,6 +11,8 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+from clinical_sentinel._trace import trace
+
 
 class AuditLog:
     """Writes structured audit events. No read/update/delete API — by design."""
@@ -33,3 +35,4 @@ class AuditLog:
         }
         with self._path.open("a") as f:
             f.write(json.dumps(entry) + "\n")
+        trace("AUDIT", "AuditLog.record", f"{event_type} actor={actor} detail={detail}")

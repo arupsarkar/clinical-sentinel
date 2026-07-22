@@ -9,6 +9,7 @@ import json
 
 from claude_agent_sdk import ClaudeAgentOptions, HookMatcher, query
 
+from clinical_sentinel._trace import trace
 from clinical_sentinel.config import get_settings
 from clinical_sentinel.models.report import RegulatoryDraft, ReportNarrative
 from clinical_sentinel.models.severity import SeverityAssessment
@@ -31,11 +32,17 @@ def _build_prompt(case_id: str) -> str:
 
 async def run_draft(case_id: str) -> RegulatoryDraft:
     """Draft a report for an assessed case; persist to pending_review/."""
+    trace("SYSTEM", "run_draft", f"drafting report for {case_id}")
     settings = get_settings()
     audit = AuditLog(settings.audit_dir)
 
     # Fail fast: the assessment must exist BEFORE we spend an agent run.
     assessment_path = settings.case_files_dir / f"{case_id}-assessment.json"
+    trace(
+        "SYSTEM",
+        "run_draft",
+        f"fail-fast check: assessment file exists? {assessment_path.exists()}",
+    )
     if not assessment_path.exists():
         raise FileNotFoundError(
             f"No assessment for {case_id}. Run: clinical-sentinel assess {case_id}"
@@ -44,6 +51,7 @@ async def run_draft(case_id: str) -> RegulatoryDraft:
 
     case_payload = json.loads((settings.case_files_dir / f"{case_id}.json").read_text())
 
+    trace("SYSTEM", "run_draft", "configuring SDK — allowed_tools=[Read, Agent] (no Write)")
     options = ClaudeAgentOptions(
         model=settings.model,
         cwd=settings.agent_workspace,
@@ -56,13 +64,16 @@ async def run_draft(case_id: str) -> RegulatoryDraft:
         },
     )
 
+    trace("AGENT", "run_draft", "invoking regulatory-reporter via SDK query()")
     result_text: str | None = None
     async for message in query(prompt=_build_prompt(case_id), options=options):
         if hasattr(message, "result") and message.result:
             result_text = message.result
     if result_text is None:
+        trace("SYSTEM", "run_draft", "no result from agent — raising")
         raise RuntimeError(f"Agent produced no result for case {case_id}")
 
+    trace("VALIDATOR", "ReportNarrative.model_validate_json", "crossing the boundary")
     narrative = ReportNarrative.model_validate_json(_extract_json(result_text))
 
     # SYSTEM facts: expedited status from the deterministic verdict,
@@ -70,16 +81,24 @@ async def run_draft(case_id: str) -> RegulatoryDraft:
     from datetime import date, timedelta
     received = date.fromisoformat(case_payload["received_date"])
     expedited = assessment.classification.is_serious
+    deadline = received + timedelta(days=EXPEDITED_DAYS) if expedited else None
+    trace(
+        "SYSTEM",
+        "run_draft",
+        f"system-computed facts: is_expedited={expedited} deadline={deadline}",
+    )
     draft = RegulatoryDraft(
         case_id=case_id,
         is_expedited=expedited,
-        reporting_deadline=received + timedelta(days=EXPEDITED_DAYS) if expedited else None,
+        reporting_deadline=deadline,
         narrative=narrative.narrative,
     )
 
     pending = settings.workspace_dir / "pending_review"
     pending.mkdir(exist_ok=True)
-    (pending / f"{case_id}-draft.json").write_text(draft.model_dump_json(indent=2))
+    draft_path = pending / f"{case_id}-draft.json"
+    draft_path.write_text(draft.model_dump_json(indent=2))
+    trace("STORAGE", "run_draft", f"wrote {draft_path.relative_to(settings.workspace_dir)}")
     audit.record(
         event_type="report_drafted",
         actor="system:reporting",

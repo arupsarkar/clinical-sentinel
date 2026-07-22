@@ -9,6 +9,7 @@ import json
 
 from claude_agent_sdk import ClaudeAgentOptions, HookMatcher, query
 
+from clinical_sentinel._trace import trace
 from clinical_sentinel.config import get_settings
 from clinical_sentinel.models.severity import SeverityAssessment
 from clinical_sentinel.orchestration.intake import _extract_json, _make_tool_audit_hook
@@ -28,9 +29,15 @@ def _build_prompt(case_id: str) -> str:
 
 async def run_assessment(case_id: str) -> SeverityAssessment:
     """Assess one persisted case; return a validated assessment."""
+    trace("SYSTEM", "run_assessment", f"assessing {case_id}")
     settings = get_settings()
     audit = AuditLog(settings.audit_dir)
 
+    trace(
+        "SYSTEM",
+        "run_assessment",
+        "building prompt with SeverityAssessment schema (tools: Read, Bash, Agent)",
+    )
     options = ClaudeAgentOptions(
         model=settings.model,
         cwd=settings.agent_workspace,
@@ -45,12 +52,22 @@ async def run_assessment(case_id: str) -> SeverityAssessment:
         },
     )
 
+    trace("AGENT", "run_assessment", "invoking severity-assessor via SDK query()")
     result_text: str | None = None
     async for message in query(prompt=_build_prompt(case_id), options=options):
         if hasattr(message, "result") and message.result:
             result_text = message.result
 
     if result_text is None:
+        trace("SYSTEM", "run_assessment", "no result from agent — raising")
         raise RuntimeError(f"Agent produced no result for case {case_id}")
 
-    return SeverityAssessment.model_validate_json(_extract_json(result_text))
+    trace("VALIDATOR", "SeverityAssessment.model_validate_json", "crossing the boundary")
+    assessment = SeverityAssessment.model_validate_json(_extract_json(result_text))
+    trace(
+        "SYSTEM",
+        "run_assessment",
+        f"validated — is_serious={assessment.classification.is_serious} "
+        f"criteria={[c.value for c in assessment.classification.criteria_met]}",
+    )
+    return assessment

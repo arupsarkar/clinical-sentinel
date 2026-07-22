@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from dotenv import load_dotenv
 
+from clinical_sentinel._trace import trace
+
 # Load .env into process environment variables at import time.
 # Safe to call even if no .env file exists (e.g., in CI where
 # variables are injected directly) — it simply does nothing.
@@ -63,8 +65,15 @@ def get_settings() -> Settings:
     out of our objects means it can't leak via logging or repr().
     """
     if not os.environ.get("ANTHROPIC_API_KEY"):
+        trace("SYSTEM", "get_settings", "ANTHROPIC_API_KEY missing — failing fast")
         raise RuntimeError(
             "ANTHROPIC_API_KEY is not set. "
             "Copy .env.example to .env and add your key."
         )
-    return Settings()
+    settings = Settings()
+    trace(
+        "SYSTEM",
+        "get_settings",
+        f"model={settings.model} workspace={settings.workspace_dir}",
+    )
+    return settings

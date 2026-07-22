@@ -1,6 +1,6 @@
 {
   "case_id": "CS-2026-000003",
-  "received_date": "2026-07-16",
+  "received_date": "2026-07-21",
   "patient": {
     "age_years": 70,
     "sex": "male",
@@ -8,7 +8,7 @@
   },
   "reporter_type": "pharmacist",
   "suspect_drug": "Neurolyn",
-  "event_description": "Patient reported mild nausea which resolved without treatment; patient did not seek medical attention.",
+  "event_description": "Patients reporting mild nausea which got resolved without treatment. The patient did not seek any medical attention",
   "seriousness": [],
   "narrative": null,
   "_source_file": "report_003.txt"

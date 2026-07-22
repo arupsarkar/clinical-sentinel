@@ -8,6 +8,7 @@ Pydantic validation — Principle 1 and Principle 8.
 
 import json
 from pathlib import Path
+from clinical_sentinel._trace import trace
 from clinical_sentinel.config import get_settings
 from clinical_sentinel.models.intake import IntakeExtraction
 from claude_agent_sdk import ClaudeAgentOptions, HookMatcher, query
@@ -48,14 +49,17 @@ def _make_tool_audit_hook(audit: AuditLog):
     """
 
     async def log_tool_use(input_data, tool_use_id, context):
+        tool = input_data.get("tool_name", "unknown")
+        fp = input_data.get("tool_input", {}).get("file_path")
+        trace("AGENT", "PostToolUse hook", f"tool={tool} file={fp}")
         audit.record(
             event_type="agent_tool_use",
             actor="agent:intake-specialist",
             detail={
-                "tool": input_data.get("tool_name", "unknown"),
+                "tool": tool,
                 # Log WHICH file was touched — but never file CONTENTS:
                 # audit logs must not become a second copy of patient data.
-                "file_path": input_data.get("tool_input", {}).get("file_path"),
+                "file_path": fp,
             },
         )
         return {}  # empty dict = observe only, don't block or modify
@@ -68,9 +72,11 @@ async def run_intake(report_filename: str) -> IntakeExtraction:
     Raises pydantic.ValidationError if the agent's output does not
     conform — bad output dies here, at the boundary, never downstream.
     """
+    trace("SYSTEM", "run_intake", f"processing intake_queue/{report_filename}")
     settings = get_settings()
     audit = AuditLog(settings.audit_dir)
 
+    trace("SYSTEM", "run_intake", "building prompt with injected IntakeExtraction schema")
     options = ClaudeAgentOptions(
         model=settings.model,
         cwd=settings.agent_workspace,      # the SDK's world = our workspace/
@@ -87,6 +93,7 @@ async def run_intake(report_filename: str) -> IntakeExtraction:
         },                                                  
     )
 
+    trace("AGENT", "run_intake", "invoking intake-specialist via SDK query()")
     result_text: str | None = None
     async for message in query(prompt=_build_prompt(report_filename), options=options):
         # The stream yields many message types (init, tool use, thinking).
@@ -95,10 +102,14 @@ async def run_intake(report_filename: str) -> IntakeExtraction:
             result_text = message.result
 
     if result_text is None:
+        trace("SYSTEM", "run_intake", "no result from agent — raising")
         raise RuntimeError(f"Agent produced no result for {report_filename}")
 
+    trace("VALIDATOR", "IntakeExtraction.model_validate_json", "crossing the boundary")
     # THE boundary: free text becomes typed, validated domain data — or dies.
-    return IntakeExtraction.model_validate_json(_extract_json(result_text))
+    extraction = IntakeExtraction.model_validate_json(_extract_json(result_text))
+    trace("SYSTEM", "run_intake", f"validated — is_complete={extraction.is_complete()}")
+    return extraction
 
 
     

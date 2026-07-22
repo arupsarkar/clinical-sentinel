@@ -1,6 +1,6 @@
 {
   "case_id": "CS-2026-000002",
-  "received_date": "2026-07-16",
+  "received_date": "2026-07-21",
   "patient": {
     "age_years": null,
     "sex": "female",
@@ -8,7 +8,7 @@
   },
   "reporter_type": "consumer/non-healthcare professional (daughter of patient)",
   "suspect_drug": "Cardiofex",
-  "event_description": "bad dizziness and nausea 30 mins after taking the drug and serious hyperventilation 45 mins after. It slowly tapers off in 2hours.",
+  "event_description": "bad dizziness and nausea 30 mins after taking the drug and serious hyperventilation 45 mins after. It slowly tapers off in 2hours",
   "seriousness": [],
   "narrative": null,
   "_source_file": "report_002.txt"

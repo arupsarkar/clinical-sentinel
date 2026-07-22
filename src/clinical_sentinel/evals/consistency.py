@@ -14,6 +14,7 @@ from collections import Counter
 
 from pydantic import BaseModel
 
+from clinical_sentinel._trace import trace
 from clinical_sentinel.evals.models import GoldenCase
 from clinical_sentinel.evals.scorer import score_extraction
 from clinical_sentinel.orchestration.intake import run_intake
@@ -41,17 +42,26 @@ async def run_consistency(golden: GoldenCase, report_filename: str, n: int = 5) 
 
     Sequential, not parallel — simpler, and avoids hammering the API.
     """
+    trace(
+        "EVAL",
+        "run_consistency",
+        f"starting N={n} trials for {report_filename} vs golden {golden.source}",
+    )
     per_field_actuals: dict[str, list[str]] = {}
     per_field_passes: dict[str, int] = Counter()
 
-    for _ in range(n):
+    for i in range(n):
+        trace("EVAL", "run_consistency", f"trial {i + 1}/{n} — invoking run_intake (real agent run)")
         extraction = await run_intake(report_filename)
         result = score_extraction(golden, extraction)
+        trial_pass = sum(1 for f in result.fields if f.passed)
+        trace("EVAL", "run_consistency", f"trial {i + 1}/{n} — {trial_pass}/{len(result.fields)} passed")
         for f in result.fields:
             per_field_actuals.setdefault(f.field, []).append(f.actual)
             if f.passed:
                 per_field_passes[f.field] += 1
 
+    trace("EVAL", "run_consistency", "aggregating per-field pass/agreement/modal/distinct")
     fields = []
     for name, actuals in per_field_actuals.items():
         counts = Counter(actuals)
@@ -64,9 +74,11 @@ async def run_consistency(golden: GoldenCase, report_filename: str, n: int = 5) 
             distinct_values=len(counts),
         ))
 
+    all_passed = all(f.pass_rate == 1.0 for f in fields)
+    trace("EVAL", "run_consistency", f"done — all_trials_passed={all_passed}")
     return ConsistencyReport(
         source=golden.source,
         trials=n,
         fields=fields,
-        all_trials_passed=all(f.pass_rate == 1.0 for f in fields),
+        all_trials_passed=all_passed,
     )

@@ -9,6 +9,7 @@ import json
 from datetime import date
 from pathlib import Path
 
+from clinical_sentinel._trace import trace
 from clinical_sentinel.models.case import AdverseEventCase
 from clinical_sentinel.models.intake import IntakeExtraction
 from clinical_sentinel.persistence.audit import AuditLog
@@ -30,7 +31,9 @@ class CaseStore:
         """
         year = date.today().year
         existing = len(list(self._case_dir.glob("CS-*.json")))
-        return f"CS-{year}-{existing + 1:06d}"
+        case_id = f"CS-{year}-{existing + 1:06d}"
+        trace("SYSTEM", "CaseStore._next_case_id", f"minted {case_id} (existing={existing})")
+        return case_id
 
     def create_case(self, extraction: IntakeExtraction, source_file: str) -> AdverseEventCase:
         """Promote an extraction to a full case and persist it.
@@ -39,6 +42,8 @@ class CaseStore:
         validators enforce the four minimum elements at construction, so
         an incomplete extraction fails here loudly, not downstream.
         """
+        trace("SYSTEM", "CaseStore.create_case", f"promoting extraction from {source_file}")
+        trace("VALIDATOR", "AdverseEventCase(...)", "constructor runs patient_must_be_identifiable")
         case = AdverseEventCase(
             case_id=self._next_case_id(),        # system fact: minted here
             received_date=date.today(),          # system fact: system clock
@@ -52,6 +57,7 @@ class CaseStore:
         payload = case.model_dump(mode="json")
         payload["_source_file"] = source_file    # provenance: which intake doc
         path.write_text(json.dumps(payload, indent=2))
+        trace("STORAGE", "CaseStore.create_case", f"wrote {path.name}")
         if self._audit:
             self._audit.record(
                 event_type="case_created",
