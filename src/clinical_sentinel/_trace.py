@@ -15,6 +15,14 @@ what you see in the terminal maps 1:1 to boxes in the diagrams:
     [HUMAN    ] 🟢 green         — CLI action initiated by a human
     [EVAL     ] 🧪 bright purple — offline measurement layer (not runtime)
 
+Each line ALSO carries the caller's source file and line number,
+auto-detected from the stack frame — so the physical location of the
+trace call is one glance away, independent of the logical `where`
+label the caller passes in. Example:
+
+    [VALIDATOR] 🔴 clinical_sentinel/orchestration/intake.py:105  IntakeExtraction.model_validate_json — crossing the boundary
+                    └── physical source (dimmed)                  └── logical `where` label
+
 Usage:
     from clinical_sentinel._trace import trace
     trace("SYSTEM", "run_intake", f"processing {filename}")
@@ -51,23 +59,53 @@ _STYLES: dict[str, tuple[str, str]] = {
     "EVAL":      ("🧪", "\033[95m"),  # bright magenta (purple)
 }
 _RESET = "\033[0m"
+_DIM = "\033[2m"
+
+# Package-relative trim marker: anything before "clinical_sentinel/" is
+# noise (the checkout path varies per machine); anything from it onward
+# uniquely identifies a source file within the package.
+_PKG_MARKER = "clinical_sentinel" + os.sep
+
+
+def _caller_location(depth: int = 2) -> str:
+    """Return e.g. 'clinical_sentinel/orchestration/intake.py:105' from the caller.
+
+    depth=2 skips this function's frame AND trace()'s frame, so the
+    reported location is where `trace()` was actually written — not
+    the tracer plumbing. Best-effort: if frame introspection fails
+    for any reason we return '?' rather than crash the caller.
+    """
+    try:
+        frame = sys._getframe(depth)
+        filename = frame.f_code.co_filename
+        lineno = frame.f_lineno
+        idx = filename.rfind(_PKG_MARKER)
+        path = filename[idx:] if idx != -1 else os.path.basename(filename)
+        return f"{path}:{lineno}"
+    except Exception:
+        return "?"
 
 
 def trace(actor: Actor, where: str, msg: str = "") -> None:
     """Emit one flow line to stderr; no-op unless CS_TRACE is set.
 
     actor: which layer is speaking (matches process-flow doc colors)
-    where: file:function or Class.method — the "who is running"
+    where: logical label — Class.method or function being described
     msg:   optional detail — values crossed, decisions taken, transitions
+
+    The physical source file:line is auto-detected from the call stack
+    and rendered in dimmed color between the actor tag and `where`.
     """
     if not _ENABLED:
         return
     emoji, color = _STYLES[actor]
     tag = f"[{actor:<9}]"
+    loc = _caller_location()
     if not _NO_COLOR:
         tag = f"{color}{tag}{_RESET}"
+        loc = f"{_DIM}{loc}{_RESET}"
     tail = f" — {msg}" if msg else ""
-    print(f"{tag} {emoji} {where}{tail}", file=sys.stderr)
+    print(f"{tag} {emoji} {loc}  {where}{tail}", file=sys.stderr)
 
 
 def is_enabled() -> bool:
