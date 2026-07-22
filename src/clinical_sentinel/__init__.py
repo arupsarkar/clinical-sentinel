@@ -114,9 +114,29 @@ def _approve_command(case_id: str) -> None:
     )
     print(f"approved:  {case_id} — recorded with actor 'human:cli'")
 
+def _format_consistency_report_as_table(report) -> str:
+    """Render a ConsistencyReport as the terminal table — as a string.
+
+    Single source of truth for the layout: stdout AND the disk file
+    are built from this same function, so the two can never drift.
+    Change the columns here, both places update in lockstep.
+    """
+    lines = [
+        f"source: {report.source}   trials: {report.trials}",
+        f"{'field':<22} {'pass':>5} {'agree':>6} {'#vals':>6}  modal",
+    ]
+    for f in report.fields:
+        lines.append(
+            f"{f.field:<22} {f.pass_rate:>5.0%} {f.agreement_rate:>6.0%} "
+            f"{f.distinct_values:>6}  {f.modal_value}"
+        )
+    lines.append(f"all trials passed: {report.all_trials_passed}")
+    return "\n".join(lines)
+
+
 def _eval_command(report_filename: str) -> None:
     """Run the N=5 consistency eval for one report against its golden label."""
-    import json as _json
+    from datetime import datetime, timezone
     from pathlib import Path
     from clinical_sentinel.evals.models import GoldenCase
     from clinical_sentinel.evals.consistency import run_consistency
@@ -134,11 +154,33 @@ def _eval_command(report_filename: str) -> None:
         f"final headline — all_trials_passed={report.all_trials_passed}",
     )
 
-    print(f"source: {report.source}   trials: {report.trials}")
-    print(f"{'field':<22} {'pass':>5} {'agree':>6} {'#vals':>6}  modal")
-    for f in report.fields:
-        print(f"{f.field:<22} {f.pass_rate:>5.0%} {f.agreement_rate:>6.0%} {f.distinct_values:>6}  {f.modal_value}")
-    print(f"all trials passed: {report.all_trials_passed}")
+    # Render once, use twice — terminal and disk share the exact layout.
+    table = _format_consistency_report_as_table(report)
+    print(table)
+
+    # Archive under workspace/ — same trust zone as case_files/, audit/,
+    # pending_review/, approved_reports/. Golden fixtures live OUTSIDE
+    # workspace (they are dev artifacts, not runtime state); eval outputs
+    # are runtime state, so they belong inside. Timestamped per-run so
+    # history is preserved and runs are diffable across time.
+    evals_dir = get_settings().workspace_dir / "evals"
+    evals_dir.mkdir(parents=True, exist_ok=True)
+    now = datetime.now(timezone.utc)
+    stamp = now.strftime("%Y%m%dT%H%M%SZ")           # sortable, filesystem-safe
+    report_stem = report_filename.replace(".txt", "")
+    out_path = evals_dir / f"{report_stem}-{stamp}.txt"
+    # Header carries the context the terminal implicitly has but a file does not.
+    header = (
+        f"# Consistency eval\n"
+        f"# report:            {report_filename}\n"
+        f"# golden:            {golden_path}\n"
+        f"# generated (UTC):   {now.isoformat(timespec='seconds')}\n"
+        f"# all_trials_passed: {report.all_trials_passed}\n"
+        f"#\n"
+    )
+    out_path.write_text(header + table + "\n")
+    trace("STORAGE", "_eval_command", f"wrote {out_path}")
+    print(f"saved:  {out_path}")
 
 def main() -> None:
     """CLI entry point: parse argv and dispatch to exactly one command.

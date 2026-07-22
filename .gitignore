@@ -17,3 +17,18 @@ wheels/
 .vscode/
 .idea/
 .DS_Store
+
+# ─────────────────────────────────────────────────────────────
+# Ephemeral runtime state — regenerable, never commit.
+# The code recreates every folder on demand (mkdir parents=True).
+# What lives OUTSIDE these paths stays tracked:
+#   - workspace/CLAUDE.md, workspace/.claude/**   (agent code)
+#   - workspace/scripts/**                        (rulebook code)
+#   - workspace/intake_queue/**                   (demo fixtures / input)
+#   - eval/golden/**                              (human-authored answer keys)
+# ─────────────────────────────────────────────────────────────
+workspace/case_files/
+workspace/pending_review/
+workspace/approved_reports/
+workspace/audit/
+workspace/evals/
