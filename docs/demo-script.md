@@ -240,7 +240,7 @@ do measurement, and humans keep the pen on anything that matters."*
   results — narrate: "this is what a real eval failure looks like;
   pass_rate drops before agreement_rate does when the agent goes
   unstable." If the whole eval fails, fall back to a cached run in
-  `eval/results/` if present.
+  `workspace/evals/` if present.
 - **Draft agent tries to Write (Act 5):** it can't — allowed_tools
   forbids it — but if it errors visibly, that's the point: narrate
   "the safety is architectural, so the failure mode is a permission
