@@ -74,7 +74,7 @@ Safety controls here are **architecture, not prompts**:
 
 ```bash
 # Requires Python 3.12+ and uv (https://docs.astral.sh/uv/)
-git clone <repo-url> && cd clinical-sentinel
+git clone https://github.com/arupsarkar/clinical-sentinel && cd clinical-sentinel
 cp .env.example .env       # add your ANTHROPIC_API_KEY
 uv sync                    # reproduce the exact locked environment
 uv run pytest -q           # deterministic-layer tests
@@ -96,6 +96,8 @@ claude mcp add clinical-sentinel -- uv run python src/clinical_sentinel/mcp_serv
   rules every component follows, each with its enforcement location
 - [Process flow](docs/architecture/process-flow.md) — per-command
   sequence diagrams grounded in code
+- [Architecture reference](docs/architecture/architecture-process-flow.md) —
+  color-coded pipeline diagram and component-by-component reference
 - [Eval results](eval/RESULTS.md) — consistency and accuracy findings
   from the measurement layer
 - [Architecture Decision Records](docs/adr/) — why the system is

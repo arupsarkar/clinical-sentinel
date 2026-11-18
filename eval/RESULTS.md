@@ -51,10 +51,11 @@ every manual check and every single-run test, is exactly the class of
 failure that motivates statistical evaluation of probabilistic systems.
 
 **Statistical note:** 80% from N=5 is an anecdote with a decimal
-point — the 95% confidence interval spans roughly 30%–97%. Five trials
-were the right N to surface the first instability; they are the wrong N
-to certify a deployment. Observing failures at a 1% rate requires
-~300 clean trials.
+point — the exact (Clopper–Pearson) 95% confidence interval spans
+roughly 28%–99%. Five trials were the right N to surface the first
+instability; they are the wrong N to certify a deployment. Showing
+that the failure rate is below 1% at 95% confidence takes about 300
+consecutive clean trials (the rule of three).
 
 ## Hallucination check (report_002)
 
@@ -78,6 +79,7 @@ cases.
 uv run clinical-sentinel eval report_002.txt   # N=5 consistency run
 ```
 
-Archived runs with timestamps live in `workspace/evals/`. Golden
-fixtures are human-authored and independently verified against source
-text — never bootstrapped from system output.
+Each run writes a timestamped record to `workspace/evals/` (gitignored;
+regenerate with the command above). Golden fixtures are human-authored
+and independently verified against source text — never bootstrapped
+from system output.

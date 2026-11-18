@@ -12,6 +12,7 @@ wheels/
 # Secrets — never commit API keys
 .env
 .env.*
+!.env.example
 
 # Editor/OS noise
 .vscode/
