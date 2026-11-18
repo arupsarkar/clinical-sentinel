@@ -90,12 +90,6 @@ uv run clinical-sentinel eval report_002.txt     # N=5 consistency eval
 claude mcp add clinical-sentinel -- uv run python src/clinical_sentinel/mcp_server.py
 ```
 
-## Architecture
-
-Color-coded process flow, per-command sequence diagrams, and a
-component-by-component reference:
-[docs/architecture/overview.md](docs/architecture/overview.md)
-
 ## Documentation
 
 - [Design principles](docs/architecture/design-principles.md) — the
