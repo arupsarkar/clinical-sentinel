@@ -1,12 +1,13 @@
 # ADR 0009: MCP server as operator console, human gate preserved
 
-**Status:** Accepted · **Date:** 2026-07-25 · **Extends scope per panel requirement (supersedes 0005 scope list, adds WS8)**
+**Status:** Accepted · **Date:** 2026-07-25
 
 ## Context
-The interview panel requires a demonstration built with Claude Code. The
-pipeline already has clean command/orchestration separation, making a
-second frontend cheap. Exposing the system as MCP tools lets any MCP
-client — Claude Code for the demo — operate it conversationally.
+The pipeline already has clean command/orchestration separation, making
+a second frontend cheap. Exposing the system as MCP tools lets any MCP
+client — Claude Code is the reference — operate it conversationally,
+which exercises the architecture under agentic delegation rather than
+direct human CLI use.
 
 ## Decisions
 1. **No approve tool — the human gate survives by omission.** The MCP

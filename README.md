@@ -48,11 +48,10 @@ not a product.
 | 8 | MCP server (Claude Code as operator console) | 🔨 In progress |
 | 9 | Eval harness (golden labels, consistency runner) | ✅ Done |
 
-Deliberate cuts and deferrals: [ADR 0005](docs/adr/0005-scope-freeze-v0-1.md)
-(signal-checker agent, dedup, production concerns) ·
-[ADR 0006](docs/adr/0006-human-gate-over-plan-mode.md) (architectural
-gate chosen over plan mode) · [ADR 0009](docs/adr/0009-mcp-server-operator-console.md)
-(MCP scope extension).
+Deliberate cuts: signal-checker agent, dedup, and production
+concerns are deferred by design (single-process demo, not a product).
+[ADR 0009](docs/adr/0009-mcp-server-operator-console.md) documents the
+MCP operator-console extension.
 
 ## Why it's built this way
 
@@ -101,7 +100,10 @@ component-by-component reference:
 
 - [Design principles](docs/architecture/design-principles.md) — the
   rules every component follows, each with its enforcement location
-- [Architecture overview](docs/architecture/overview.md)
+- [Process flow](docs/architecture/process-flow.md) — per-command
+  sequence diagrams grounded in code
+- [Eval results](eval/RESULTS.md) — consistency and accuracy findings
+  from the measurement layer
 - [Architecture Decision Records](docs/adr/) — why the system is
   shaped the way it is, including what was deliberately cut
 
